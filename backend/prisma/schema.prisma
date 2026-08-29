@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProjectCategory {
+  ANIMATION_3D
+  PRODUCT_VISUALIZATION
+  CAD_DESIGN
+  AR_VR
+  DIAMOND
+}
+
+enum JournalCategory {
+  CAD
+  MARKETING
+  MANUFACTURING
+  THREE_D
+  TECHNOLOGY
+}
+
+enum InquiryStatus {
+  NEW
+  IN_PROGRESS
+  COMPLETED
+  ARCHIVED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  name          String?
+  role          String    @default("admin")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  inquiries     Inquiry[]
+
+  @@map("users")
+}
+
+model Project {
+  id          String         @id @default(cuid())
+  slug        String         @unique
+  title       String
+  description String
+  category    ProjectCategory
+  imageUrl    String
+  imageAlt    String
+  imageWidth  Int?
+  imageHeight Int?
+  service     String
+  format      String
+  year        String
+  featured    Boolean        @default(false)
+  scale       String?
+  modelUrl    String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("projects")
+}
+
+model JournalPost {
+  id          String         @id @default(cuid())
+  slug        String         @unique
+  title       String
+  category    JournalCategory
+  date        DateTime
+  excerpt     String
+  body        String[]
+  readingTime String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("journal_posts")
+}
+
+model Inquiry {
+  id          String         @id @default(cuid())
+  fullName    String
+  email       String
+  company     String?
+  projectType String?
+  message     String
+  status      InquiryStatus  @default(NEW)
+  reference   String         @unique @default(cuid())
+  userId      String?
+  user        User?          @relation(fields: [userId], references: [id])
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("inquiries")
+}
+
+model Configuration {
+  id           String   @id @default(cuid())
+  reference    String   @unique @default(cuid())
+  productId    String?
+  materialId   String?
+  gemstoneId   String?
+  metal        String?
+  gemstone     String?
+  cut          String
+  finish       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("configurations")
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  description  String
+  modelUrl     String
+  thumbnailUrl String
+  category     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("products")
+}
+
+model Material {
+  id          String   @id @default(cuid())
+  name        String
+  type        String
+  color       String
+  roughness   Float
+  metalness   Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("materials")
+}
+
+model Gemstone {
+  id        String   @id @default(cuid())
+  name      String
+  color     String
+  cut       String
+  modelUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("gemstones")
+}

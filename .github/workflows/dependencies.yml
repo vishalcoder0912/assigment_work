@@ -1,0 +1,96 @@
+name: Dependency Updates & Security Patches
+
+on:
+  schedule:
+    - cron: "0 2 * * MON" # Every Monday at 2 AM UTC
+  workflow_dispatch:
+
+jobs:
+  dependency-review:
+    name: Review Dependencies
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: ./backend
+
+      - name: Check for outdated packages (frontend)
+        run: npm outdated || true
+
+      - name: Check for outdated packages (backend)
+        run: npm outdated || true
+        working-directory: ./backend
+
+      - name: Run npm audit fix (frontend)
+        run: npm audit fix --force || true
+
+      - name: Run npm audit fix (backend)
+        run: npm audit fix --force || true
+        working-directory: ./backend
+
+      - name: Create PR with updates
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update dependencies and security patches"
+          title: "chore: Weekly dependency updates"
+          body: |
+            Automated weekly dependency updates and security patches.
+
+            This PR includes:
+            - Frontend dependency updates
+            - Backend dependency updates
+            - Security vulnerability fixes
+
+            Please review the changes and run tests before merging.
+          branch: chore/weekly-dependency-updates
+          delete-branch: true
+          labels: "dependencies, automated"
+
+  dependabot-auto-merge:
+    name: Auto-merge Dependabot PRs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test --if-present
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Auto-approve and merge
+        uses: ahmadnassri/action-dependabot-auto-merge@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          target: minor
+          merge-method: squash

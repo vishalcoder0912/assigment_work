@@ -1,0 +1,90 @@
+version: 2
+updates:
+  # Frontend dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "02:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "frontend"
+    commit-message:
+      prefix: "chore(frontend)"
+    pull-request-branch-name:
+      separator: "-"
+    groups:
+      frontend-dev:
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "prettier*"
+          - "typescript*"
+          - "vite*"
+          - "vitest*"
+      frontend-prod:
+        patterns:
+          - "react*"
+          - "@tanstack/*"
+          - "@radix-ui/*"
+          - "tailwind*"
+          - "lucide-react"
+          - "framer-motion"
+          - "zod"
+          - "clsx"
+          - "tailwind-merge"
+          - "class-variance-authority"
+
+  # Backend dependencies
+  - package-ecosystem: "npm"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "02:30"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "backend"
+    commit-message:
+      prefix: "chore(backend)"
+    pull-request-branch-name:
+      separator: "-"
+    groups:
+      backend-dev:
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "typescript*"
+          - "tsx*"
+          - "vitest*"
+          - "supertest*"
+      backend-prod:
+        patterns:
+          - "@prisma/*"
+          - "express*"
+          - "prisma*"
+          - "jsonwebtoken*"
+          - "bcryptjs*"
+          - "zod*"
+          - "helmet*"
+          - "cors*"
+          - "morgan*"
+          - "express-rate-limit*"
+          - "dotenv*"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"
