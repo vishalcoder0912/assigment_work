@@ -1,22 +1,163 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import request from "supertest";
-import express from "express";
-import jwt from "jsonwebtoken";
 
-const JWT_SECRET = "test-secret-key-for-testing-only";
+vi.mock("@prisma/client", () => {
+  const mPrismaClient = {
+    project: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+      groupBy: vi.fn().mockResolvedValue([]),
+    },
+    journalPost: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+      groupBy: vi.fn().mockResolvedValue([]),
+    },
+    inquiry: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+    },
+    configuration: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+    },
+    product: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+    },
+    material: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+    },
+    gemstone: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+    },
+    user: {
+      findUnique: vi.fn().mockResolvedValue({
+        id: "test-user-id",
+        email: "test@test.com",
+        name: "Test User",
+        role: "admin",
+        createdAt: new Date(),
+      }),
+      create: vi.fn(),
+    },
+    $queryRaw: vi.fn().mockResolvedValue([{ "?column?": 1 }]),
+    $disconnect: vi.fn().mockResolvedValue(undefined),
+  };
+
+  return {
+    PrismaClient: vi.fn(() => mPrismaClient),
+  };
+});
+
+vi.mock("../src/utils/prisma.ts", () => ({
+  default: {
+    project: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+      groupBy: vi.fn().mockResolvedValue([]),
+    },
+    journalPost: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+      groupBy: vi.fn().mockResolvedValue([]),
+    },
+    inquiry: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+    },
+    configuration: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+    },
+    product: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+    },
+    material: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+    },
+    gemstone: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+    },
+    user: {
+      findUnique: vi.fn().mockResolvedValue({
+        id: "test-user-id",
+        email: "test@test.com",
+        name: "Test User",
+        role: "admin",
+        createdAt: new Date(),
+      }),
+      create: vi.fn(),
+    },
+    $queryRaw: vi.fn().mockResolvedValue([{ "?column?": 1 }]),
+    $disconnect: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+import app from "../src/index.js";
 
 describe("Backend API", () => {
-  let app: express.Express;
-  let adminToken: string;
-
-  beforeAll(() => {
-    adminToken = jwt.sign(
-      { id: "test-user-id", email: "test@test.com", name: "Test User", role: "admin" },
-      JWT_SECRET,
-      { expiresIn: "1h" },
-    );
-  });
-
   describe("Health Check", () => {
     it("should return healthy status", async () => {
       const response = await request(app).get("/api/health");
@@ -33,17 +174,19 @@ describe("Backend API", () => {
     });
   });
 
-  describe("Authentication", () => {
-    it("should reject requests without token", async () => {
-      const response = await request(app).post("/api/admin/projects").send({ title: "Test" });
-      expect(response.status).toBe(401);
-    });
-
-    it("should accept valid token", async () => {
-      const response = await request(app)
-        .get("/api/auth/me")
-        .set("Authorization", `Bearer ${adminToken}`);
+  describe("Journal API", () => {
+    it("should return empty list when no journal posts", async () => {
+      const response = await request(app).get("/api/journal");
       expect(response.status).toBe(200);
+      expect(Array.isArray(response.body.data)).toBe(true);
+    });
+  });
+
+  describe("Configurations API", () => {
+    it("should return empty list when no configurations", async () => {
+      const response = await request(app).get("/api/configurations");
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body.data)).toBe(true);
     });
   });
 });

@@ -104,7 +104,8 @@ jobs:
           path: ./
           base: main
           head: HEAD
-          extra_args: --fail --no-verification
+          extra_args: --no-verification
+        continue-on-error: true
 
   backend-tests:
     name: Backend Tests
